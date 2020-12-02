@@ -1,7 +1,7 @@
 # Rosey
 Rosey is a generic and simple, yet powerful, interactive tool to process CSV files. It is named after the character **[Rosey](https://thejetsons.fandom.com/wiki/Rosey)** from The Jetsons cartoon.
 
-![Rosey the robot](https://vignette.wikia.nocookie.net/thejetsons/images/1/15/Rosie_The_Robot_The_Jetsons_&_WWE_Robo-WrestleMania_%282%29.png/revision/latest/top-crop/width/300/height/300?cb=20200808224502)
+![enter image description here](https://vignette.wikia.nocookie.net/thejetsons/images/1/15/Rosie_The_Robot_The_Jetsons_&_WWE_Robo-WrestleMania_%282%29.png/revision/latest/top-crop/width/300/height/300?cb=20200808224502)
 
 Rosey provides a shell to load, process and keep track of data from CSV files using simple commands.
 
@@ -51,6 +51,8 @@ If you want to check any record, you can just use `data get <row-id>`.
 
 > You can set the `row id` in the *CSV* file in a column with one of  this names: `id` `row-id` `rowid`. Otherwise the row id will be generated automatically.
 
+![data loading](https://raw.githubusercontent.com/jjocenio/rosey/main/assets/data-load.gif)
+
 ### Processing
 You can process the data using the command `process <processor>`. You also need to specify if you want to process `all` rows or only `--row-id <row-id>`. 
 
@@ -93,3 +95,9 @@ In every place you can use a template, you will have the following data model av
 	 - **`output`**: the output of the processed row
 
 > **NOTE** When using docker, always remember to put your files in a shared volume
+
+![data loading](https://raw.githubusercontent.com/jjocenio/rosey/main/assets/process.gif)
+
+## External references
+
+ - **Freemarker**: https://freemarker.apache.org/docs/dgui_quickstart_template.html

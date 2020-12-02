@@ -40,3 +40,4 @@ jobs:
         context: .
         repository: jjocenio/rosey
         tags: jjocenio/rosey:latest
+        push: true

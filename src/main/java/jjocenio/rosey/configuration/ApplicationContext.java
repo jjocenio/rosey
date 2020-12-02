@@ -15,7 +15,15 @@ public class ApplicationContext {
 
     @Bean
     public ExecutorService executorService(@Value("${batch.threads:10}") int threads) {
-        return Executors.newFixedThreadPool(threads);
+        final ExecutorService executorService = Executors.newFixedThreadPool(threads);
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run()  {
+                executorService.shutdownNow();
+            }
+        });
+
+        return executorService;
     }
 
     @Bean

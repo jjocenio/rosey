@@ -6,6 +6,8 @@ spring:
     url: jdbc:hsqldb:file://${HOME}/rosey/db
     username: sa
     password:
+  main:
+    web-application-type: none
   jpa:
     database-platform: org.hibernate.dialect.HSQLDialect
     hibernate:

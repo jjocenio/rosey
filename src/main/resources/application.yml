@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: rosey
+  datasource:
+    driver-class-name: org.hsqldb.jdbc.JDBCDriver
+    url: jdbc:hsqldb:file://${HOME}/rosey/db
+    username: sa
+    password:
+  jpa:
+    database-platform: org.hibernate.dialect.HSQLDialect
+    hibernate:
+      ddl-auto: update
+
+logging:
+  level:
+    root: ERROR

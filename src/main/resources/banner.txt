@@ -1,0 +1,23 @@
+${AnsiColor.BRIGHT_YELLOW}
+  RRRRRRRRRRRRRRRRR
+  R::::::::::::::::R
+  R::::::RRRRRR:::::R
+  RR:::::R     R:::::R
+    R::::R     R:::::R    ooooooooooo        ssssssssss        eeeeeeeeeeee   yyyyyyy           yyyyyyy
+    R::::R     R:::::R  oo:::::::::::oo    ss::::::::::s     ee::::::::::::ee  y:::::y         y:::::y
+    R::::RRRRRR:::::R  o:::::::::::::::o ss:::::::::::::s   e::::::eeeee:::::ee y:::::y       y:::::y
+    R:::::::::::::RR   o:::::ooooo:::::o s::::::ssss:::::s e::::::e     e:::::e  y:::::y     y:::::y
+    R::::RRRRRR:::::R  o::::o     o::::o  s:::::s  ssssss  e:::::::eeeee::::::e   y:::::y   y:::::y
+    R::::R     R:::::R o::::o     o::::o    s::::::s       e:::::::::::::::::e     y:::::y y:::::y
+    R::::R     R:::::R o::::o     o::::o       s::::::s    e::::::eeeeeeeeeee       y:::::y:::::y
+    R::::R     R:::::R o::::o     o::::o ssssss   s:::::s  e:::::::e                 y:::::::::y
+  RR:::::R     R:::::R o:::::ooooo:::::o s:::::ssss::::::s e::::::::e                 y:::::::y
+  R::::::R     R:::::R o:::::::::::::::o s::::::::::::::s   e::::::::eeeeeeee          y:::::y
+  R::::::R     R:::::R  oo:::::::::::oo   s:::::::::::ss     ee:::::::::::::e         y:::::y
+  RRRRRRRR     RRRRRRR    ooooooooooo      sssssssssss         eeeeeeeeeeeeee        y:::::y
+                                                                                    y:::::y
+                                                                                   y:::::y
+                                                                                  y:::::y
+                                                                                 y:::::y
+                                                                                yyyyyyy
+${AnsiColor.WHITE}

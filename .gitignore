@@ -29,3 +29,4 @@ nbdist/
 .nb-gradle/
 
 *.log
+.DS_Store

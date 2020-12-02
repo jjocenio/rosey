@@ -23,12 +23,12 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: package
-        path: build/libs/rosey-*.jar
+        path: build/libs
     - name: Download a artifact
       uses: actions/download-artifact@v2
       with:
         name: package
-        working-directory: build/libs
+        path: build/libs
     - name: Push to Docker Hub
       uses: docker/build-push-action@v2
       with:

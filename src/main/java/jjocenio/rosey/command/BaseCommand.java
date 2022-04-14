@@ -45,4 +45,9 @@ public abstract class BaseCommand {
             }
         }
     }
+
+    @SuppressWarnings("java:S106")
+    protected void println(String message) {
+        System.out.println(message);
+    }
 }

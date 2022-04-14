@@ -2,6 +2,7 @@ package jjocenio.rosey.service.http;
 
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
+import jjocenio.rosey.component.ExecutorServiceProvider;
 import jjocenio.rosey.component.TemplateHelper;
 import jjocenio.rosey.persistence.Row;
 import jjocenio.rosey.service.AbstractProcessService;
@@ -9,6 +10,8 @@ import jjocenio.rosey.service.ProcessContext;
 import jjocenio.rosey.service.RowService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -17,7 +20,7 @@ import org.springframework.web.client.RestTemplate;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @Qualifier("http")
@@ -27,76 +30,71 @@ public class HttpProcessService extends AbstractProcessService {
     private final RestTemplate restTemplate;
 
     @Autowired
-    public HttpProcessService(RowService rowService, ExecutorService executorService,
+    public HttpProcessService(RowService rowService, ExecutorServiceProvider executorServiceProvider,
                               RestTemplate restTemplate, TemplateHelper templateHelper) {
 
-        super(rowService, executorService);
+        super(rowService, executorServiceProvider);
         this.restTemplate = restTemplate;
         this.templateHelper = templateHelper;
     }
 
     @Override
+    @SuppressWarnings("java:S2142")
     protected Row process(Row row, ProcessContext context) {
+        HttpProcessContext httpProcessContext = (HttpProcessContext) context;
+
         try {
-            HttpProcessContext httpProcessContext = (HttpProcessContext) context;
             updateRowStatus(row, Row.Status.PROCESSING, null);
             String url = getUrl((HttpProcessContext) context, row);
 
-            RequestEntity.HeadersBuilder requestEntityBuilder = getHeadersBuilder(httpProcessContext, url);
-            requestEntityBuilder = applyHeaders(row, httpProcessContext, requestEntityBuilder);
-            requestEntityBuilder = applyBody(row, httpProcessContext, requestEntityBuilder);
+            HttpHeaders headers = applyHeaders(row, httpProcessContext);
+            String body = applyBody(row, httpProcessContext);
 
-            ResponseEntity<String> response = restTemplate.exchange(requestEntityBuilder.build(), String.class);
+            RequestEntity<String> requestEntity = createRequestEntity(httpProcessContext, url, headers, body);
+
+            ResponseEntity<String> response = restTemplate.exchange(requestEntity, String.class);
             if (response.getStatusCode().is2xxSuccessful()) {
                 updateRowStatus(row, Row.Status.PROCESSED, null, response.getBody());
             } else {
                 updateRowStatus(row, Row.Status.FAILED, "Http Error: " + response.getStatusCodeValue(), response.getBody());
             }
         } catch (Exception e) {
-            updateRowStatus(row, Row.Status.FAILED, e.getMessage());
+            updateRowStatus(row, Row.Status.FAILED, e);
+        }
+
+        if (httpProcessContext.getHttpConfig().getWait() > 0L) {
+            try {
+                TimeUnit.SECONDS.sleep(httpProcessContext.getHttpConfig().getWait());
+            } catch (InterruptedException ignored) {
+            }
         }
 
         return row;
     }
 
-    private RequestEntity.HeadersBuilder applyBody(Row row, HttpProcessContext httpProcessContext, RequestEntity.HeadersBuilder requestEntityBuilder) throws IOException, TemplateException {
+    private String applyBody(Row row, HttpProcessContext httpProcessContext) throws IOException, TemplateException {
+        String body = null;
         if (httpProcessContext.getHttpConfig().getBody() != null) {
-            String body = getBody(httpProcessContext, row);
-            requestEntityBuilder = (RequestEntity.HeadersBuilder) ((RequestEntity.BodyBuilder) requestEntityBuilder).body(body, String.class);
+            body = getBody(httpProcessContext, row);
         }
-        return requestEntityBuilder;
+        return body;
     }
 
-    private RequestEntity.HeadersBuilder applyHeaders(Row row, HttpProcessContext httpProcessContext, RequestEntity.HeadersBuilder requestEntityBuilder) throws IOException, TemplateException {
+    private HttpHeaders applyHeaders(Row row, HttpProcessContext httpProcessContext) throws IOException, TemplateException {
+        HttpHeaders httpHeaders = new HttpHeaders();
         if (httpProcessContext.getHttpConfig().getHeaders() != null) {
             String headers = getHeaders(httpProcessContext, row);
-            for (String header: headers.split("|")) {
+            for (String header: headers.split("\\|")) {
                 String[] headerKeyValue = header.split(":");
-                requestEntityBuilder = requestEntityBuilder.header(headerKeyValue[0], headerKeyValue[1]);
+                httpHeaders.add(headerKeyValue[0], headerKeyValue[1]);
             }
         }
-        return requestEntityBuilder;
+        return httpHeaders;
     }
 
-    private RequestEntity.HeadersBuilder getHeadersBuilder(HttpProcessContext httpProcessContext, String url) throws URISyntaxException {
-        RequestEntity.HeadersBuilder requestEntityBuilder = null;
-        switch (httpProcessContext.getHttpConfig().getHttpMethod()) {
-            case POST:
-                requestEntityBuilder = RequestEntity.post(new URI(url));
-                break;
-            case PUT:
-                requestEntityBuilder = RequestEntity.put(new URI(url));
-                break;
-            case GET:
-                requestEntityBuilder = RequestEntity.get(new URI(url));
-                break;
-            case DELETE:
-                requestEntityBuilder = RequestEntity.delete(new URI(url));
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid Http Method");
-        }
-        return requestEntityBuilder;
+    private RequestEntity<String> createRequestEntity(HttpProcessContext httpProcessContext, String url, HttpHeaders headers, String body) throws URISyntaxException {
+        HttpMethod httpMethod = HttpMethod.resolve(httpProcessContext.getHttpConfig().getHttpMethod().name());
+        return new RequestEntity<>(body, headers, httpMethod, new URI(url));
     }
 
     private String getUrl(HttpProcessContext context, Row row) throws IOException, TemplateException {

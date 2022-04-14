@@ -10,6 +10,7 @@ import jjocenio.rosey.service.http.HttpProcessConfig;
 import jjocenio.rosey.service.http.HttpProcessContext;
 import jjocenio.rosey.service.http.HttpProcessService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.shell.Availability;
 import org.springframework.shell.standard.ShellCommandGroup;
 import org.springframework.shell.standard.ShellComponent;
@@ -35,12 +36,12 @@ public class HttpProcessCommand extends BaseCommand {
     @ShellMethod(key = "process http all", value = "processes all pending rows")
     @ShellMethodAvailability("processCheckAvailability")
     public long runAll(@ShellOption(optOut = true) HttpProcessAllArgs args) throws IOException {
-
         ProcessContext context = createContext(args);
         HttpProcessConfig config = (HttpProcessConfig) context.getConfig();
 
         config.setLimit(args.getLimit());
         config.setIncludeFailed(args.isIncludeFailed());
+        config.setWait(args.getWait());
 
         return processService.processAll(context);
     }
@@ -48,7 +49,6 @@ public class HttpProcessCommand extends BaseCommand {
     @ShellMethod(key = "process http", value = "process one single row")
     @ShellMethodAvailability("processCheckAvailability")
     public Row process(@ShellOption(optOut = true) HttpProcessRowArgs args) throws IOException {
-
         ProcessContext context = createContext(args);
         return processService.processRow(args.getRowId(), context);
     }
@@ -57,9 +57,9 @@ public class HttpProcessCommand extends BaseCommand {
         return processService.isRunning() ? Availability.unavailable("Process is already running!") : Availability.available();
     }
 
-    private ProcessContext createContext(HttpProcessArgs args) throws IOException {
+    private ProcessContext createContext(@NonNull HttpProcessArgs args) throws IOException {
         OutputWriter outputWriter = null;
-        if (args != null && args.getPath() != null) {
+        if (args.getPath() != null) {
             Template path = templateHelper.getTemplate(args.getPath());
             outputWriter = new OutputWriter(templateHelper, path, args.isOverride(), args.isAppend());
         }
@@ -71,18 +71,16 @@ public class HttpProcessCommand extends BaseCommand {
         config.setBody(args.getBody());
         config.setHeaders(args.getHeaders());
 
-        ProcessContext context = new HttpProcessContext(config, outputWriter);
-
-        return context;
+        return new HttpProcessContext(config, outputWriter);
     }
 }
 
 class HttpProcessArgs extends OutputArgs {
 
-    @Parameter(names = "--url", description = "the target endpoint to send the request. Freemarker template is supported")
+    @Parameter(names = "--url", description = "the target endpoint to send the request. Freemarker template is supported", required = true)
     private String url;
 
-    @Parameter(names = "--http-method", description = "the http method to use")
+    @Parameter(names = "--http-method", description = "the http method to use", required = true)
     private HttpProcessConfig.HttpMethod httpMethod;
 
     @Parameter(names = "--body", description = "the request body. Freemarker template is supported. Use '@' to use a file instead of inline template")
@@ -132,6 +130,9 @@ class HttpProcessAllArgs extends HttpProcessArgs {
     @Parameter(names = "--limit", description = "limit the number of records to process")
     private long limit = -1;
 
+    @Parameter(names = "--wait", description = "Time in seconds to wait between rows")
+    private long wait = -1;
+
     public boolean isIncludeFailed() {
         return includeFailed;
     }
@@ -146,6 +147,14 @@ class HttpProcessAllArgs extends HttpProcessArgs {
 
     public void setLimit(long limit) {
         this.limit = limit;
+    }
+
+    public long getWait() {
+        return wait;
+    }
+
+    public void setWait(long wait) {
+        this.wait = wait;
     }
 }
 

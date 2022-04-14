@@ -5,12 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jjocenio.rosey.persistence.converter.JsonConverter;
 
-import javax.persistence.Convert;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.Date;
 import java.util.Map;
 
@@ -24,11 +19,15 @@ public class Row {
     @Enumerated(EnumType.STRING)
     private Status status = Status.PENDING;
 
+    @Lob
+    @Column(length = 100000)
     private String resultDetail;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss.SSS")
     private Date lastUpdate = new Date();
 
+    @Lob
+    @Column(length = 100000)
     @Convert(converter = JsonConverter.class)
     private Map<String, Object> data;
 

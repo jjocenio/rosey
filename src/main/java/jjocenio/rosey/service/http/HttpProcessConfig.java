@@ -8,6 +8,7 @@ public class HttpProcessConfig extends ProcessConfig {
     private HttpMethod httpMethod;
     private String body;
     private String headers;
+    private long wait;
 
     public String getHeaders() {
         return headers;
@@ -39,6 +40,14 @@ public class HttpProcessConfig extends ProcessConfig {
 
     public void setBody(String body) {
         this.body = body;
+    }
+
+    public long getWait() {
+        return wait;
+    }
+
+    public void setWait(long wait) {
+        this.wait = wait;
     }
 
     public enum HttpMethod {

@@ -1,22 +1,26 @@
 package jjocenio.rosey.service;
 
+import jjocenio.rosey.component.ExecutorServiceProvider;
 import jjocenio.rosey.persistence.Row;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import static java.util.stream.Collectors.joining;
+
 public abstract class AbstractProcessService implements ProcessService {
 
     private final RowService rowService;
-    private final ExecutorService executorService;
+    private final ExecutorServiceProvider executorServiceProvider;
 
-    public AbstractProcessService(RowService rowService, ExecutorService executorService) {
-
+    protected AbstractProcessService(RowService rowService, ExecutorServiceProvider executorServiceProvider) {
         this.rowService = rowService;
-        this.executorService = executorService;
+        this.executorServiceProvider = executorServiceProvider;
     }
 
     public long processAll(ProcessContext context) {
@@ -35,7 +39,7 @@ public abstract class AbstractProcessService implements ProcessService {
     public Row processRow(long rowId, ProcessContext context) throws IOException {
         checkRunning();
 
-        Row row = rowService.findById(rowId).get();
+        Row row = rowService.findById(rowId).orElseThrow(() -> new IllegalArgumentException("Invalid row id"));
 
         if (row.getStatus() == Row.Status.PROCESSED) {
             throw new IllegalStateException("Row is already processed");
@@ -48,7 +52,7 @@ public abstract class AbstractProcessService implements ProcessService {
 
     @Override
     public boolean isRunning() {
-        return ((ThreadPoolExecutor) executorService).getActiveCount() > 0;
+        return ((ThreadPoolExecutor) executorServiceProvider.getExecutorService()).getActiveCount() > 0;
     }
 
     protected void checkRunning() {
@@ -57,7 +61,10 @@ public abstract class AbstractProcessService implements ProcessService {
         }
     }
 
+    @SuppressWarnings("java:S112")
     protected long processAll(Iterable<Row> rows, ProcessContext context) {
+        ExecutorService executorService = executorServiceProvider.getExecutorService();
+
         long limit = context.getConfig().getLimit();
         long count = 0;
         for (Row row: rows) {
@@ -77,11 +84,27 @@ public abstract class AbstractProcessService implements ProcessService {
             }
         }
 
+        executorService.shutdown();
+
         return count;
     }
 
-    protected void updateRowStatus(Row row, Row.Status status, String detail) {
-        updateRowStatus(row, status, detail, null);
+    protected String getErrorDetail(Throwable throwable) {
+        if (throwable == null) {
+            return null;
+        }
+
+        if (throwable.getMessage() != null) {
+            return throwable.getMessage();
+        }
+
+        StringWriter stringWriter = new StringWriter();
+        throwable.printStackTrace(new PrintWriter(stringWriter));
+        return stringWriter.toString().lines().limit(5).collect(joining());
+    }
+
+    protected void updateRowStatus(Row row, Row.Status status, Throwable detail) {
+        updateRowStatus(row, status, getErrorDetail(detail), null);
     }
 
     protected void updateRowStatus(Row row, Row.Status status, String detail, String output) {

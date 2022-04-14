@@ -12,9 +12,17 @@ import org.springframework.shell.standard.ShellCommandGroup;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
+import org.springframework.shell.table.BeanListTableModel;
+import org.springframework.shell.table.BorderStyle;
+import org.springframework.shell.table.TableBuilder;
+import org.springframework.shell.table.TableModel;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+
+import static java.util.stream.Collectors.toList;
 
 @ShellComponent
 @ShellCommandGroup("data")
@@ -106,8 +114,29 @@ public class DataCommand extends BaseCommand {
         }
     }
 
-    @ShellMethod(key = "data reset", value = "reset processing rows to pending")
+    @ShellMethod(key = "data reset", value = "resets processing rows to pending")
     public void reset() {
         service.updateProcessingToPending();
+    }
+
+    @ShellMethod(key = "data show-failed", value = "presents a list of failed rows if any")
+    public void showFailed(@ShellOption(value = "--limit", help = "the limit f rows to show", defaultValue = "50") long limit,
+                           @ShellOption(value = "--width", help = "the width of the table in number characters. if <= 0, it defaults to terminal width", defaultValue = "-1") int width) {
+        List<Row> rowsFailed = service.findAllByStatus(Row.Status.FAILED).stream().limit(limit).collect(toList());
+
+        LinkedHashMap<String, Object> headers = new LinkedHashMap<>();
+        headers.put("id", "Id");
+        headers.put("status", "Status");
+        headers.put("lastUpdate", "Last Update");
+        headers.put("resultDetail", "Result Detail");
+
+        TableModel tableModel = new BeanListTableModel<>(rowsFailed, headers);
+
+        TableBuilder tableBuilder = new TableBuilder(tableModel);
+        tableBuilder.addInnerBorder(BorderStyle.fancy_light);
+        tableBuilder.addHeaderBorder(BorderStyle.fancy_double);
+
+        terminal.writer().println(tableBuilder.build().render(width <= 0 ? terminal.getWidth() : width));
+        terminal.flush();
     }
 }

@@ -16,7 +16,7 @@ public interface RowRepository extends CrudRepository<Row, Long> {
     List<Object[]> countGroupByStatus();
 
     @Modifying
-    @Query(value = "update Row set status = 'PENDING' where status = 'PROCESSING'")
+    @Query(value = "update Row set status = 'PENDING'")
     @Transactional
     void updateProcessingToPending();
 

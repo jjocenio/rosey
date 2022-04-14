@@ -1,5 +1,6 @@
 package jjocenio.rosey.command;
 
+import jjocenio.rosey.component.ExecutorServiceProvider;
 import me.tongfei.progressbar.ProgressBar;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.shell.standard.ShellCommandGroup;
@@ -9,6 +10,7 @@ import org.springframework.shell.standard.ShellOption;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @ShellComponent
@@ -23,16 +25,16 @@ public class ProcessCommand extends BaseCommand {
 
     private static final String STATUS_NOT_RUNNING = "There's no process running now";
 
-    private final ExecutorService executorService;
+    private final ExecutorServiceProvider executorServiceProvider;
 
     @Autowired
-    public ProcessCommand(ExecutorService executorService) {
-        this.executorService = executorService;
+    public ProcessCommand(ExecutorServiceProvider executorServiceProvider) {
+        this.executorServiceProvider = executorServiceProvider;
     }
 
     @ShellMethod(key = "process status", value = "shows the status of the current process")
     public String status() {
-        ThreadPoolExecutor executor = (ThreadPoolExecutor) executorService;
+        ThreadPoolExecutor executor = (ThreadPoolExecutor) executorServiceProvider.getExecutorService();
         int threads = executor.getActiveCount();
 
         if (threads == 0) {
@@ -46,47 +48,50 @@ public class ProcessCommand extends BaseCommand {
         return String.format(STATUS_RUNNING_PATTERN, threads, total, completed, queued);
     }
 
+    @SuppressWarnings("java:S2142")
     @ShellMethod(key = "process show-progress", value = "shows a progress bar")
     public void showProgress(@ShellOption(value = "--delay", defaultValue = "5000", help = "the update interval") long delay) {
         final AtomicBoolean running = new AtomicBoolean(true);
-        final ThreadPoolExecutor executor = (ThreadPoolExecutor) executorService;
+        final ThreadPoolExecutor executor = (ThreadPoolExecutor) executorServiceProvider.getExecutorService();
 
         if (executor.getActiveCount() == 0) {
-            System.out.println(STATUS_NOT_RUNNING);
+            println(STATUS_NOT_RUNNING);
+            return;
         }
 
-        System.out.println("Press Ctrl + C to stop\n");
+        println("Press Ctrl + C to stop\n");
 
         long total = executor.getTaskCount();
-        final ProgressBar pb = new ProgressBar("Processing", total);
 
-        try {
+        try (ProgressBar pb = new ProgressBar("Processing", total)) {
             Thread progressThread = new Thread(() -> {
                 while (running.get() && executor.getActiveCount() > 0) {
                     pb.stepTo(executor.getCompletedTaskCount());
                     try {
-                        Thread.sleep(delay);
-                    } catch (InterruptedException e) {
+                        TimeUnit.MILLISECONDS.sleep(delay);
+                    } catch (InterruptedException ignored) {
                     }
                 }
+
+                pb.stepTo(executor.getCompletedTaskCount());
             });
             progressThread.start();
 
             while (progressThread.isAlive()) {
-                Thread.sleep(500);
+                TimeUnit.MILLISECONDS.sleep(500);
             }
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ignored) {
         } finally {
-            pb.close();
             running.set(false);
         }
     }
 
     @ShellMethod(key = "process stop", value = "stops the process")
     public void stopProcess() throws InterruptedException {
+        ExecutorService executorService = executorServiceProvider.getExecutorService();
         executorService.shutdownNow();
         while (!executorService.isShutdown()) {
-            Thread.sleep(1000);
+            TimeUnit.MILLISECONDS.sleep(1000);
         }
     }
 }

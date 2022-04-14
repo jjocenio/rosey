@@ -10,6 +10,7 @@ import jjocenio.rosey.service.text.TextProcessConfig;
 import jjocenio.rosey.service.text.TextProcessContext;
 import jjocenio.rosey.service.text.TextProcessService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.shell.Availability;
 import org.springframework.shell.standard.ShellCommandGroup;
 import org.springframework.shell.standard.ShellComponent;
@@ -35,7 +36,6 @@ public class TextProcessCommand extends BaseCommand {
     @ShellMethod(key = "process text all", value = "processes all pending rows")
     @ShellMethodAvailability("processCheckAvailability")
     public long runAll(@ShellOption(optOut = true) TextProcessAllArgs args) throws IOException {
-
         ProcessContext context = createContext(args);
         TextProcessConfig config = (TextProcessConfig) context.getConfig();
 
@@ -48,7 +48,6 @@ public class TextProcessCommand extends BaseCommand {
     @ShellMethod(key = "process text", value = "process one single row")
     @ShellMethodAvailability("processCheckAvailability")
     public Row process(@ShellOption(optOut = true) TextProcessRowArgs args) throws IOException {
-
         ProcessContext context = createContext(args);
         return processService.processRow(args.getRowId(), context);
     }
@@ -57,9 +56,9 @@ public class TextProcessCommand extends BaseCommand {
         return processService.isRunning() ? Availability.unavailable("Process is already running!") : Availability.available();
     }
 
-    private ProcessContext createContext(TextProcessArgs args) throws IOException {
+    private ProcessContext createContext(@NonNull TextProcessArgs args) throws IOException {
         OutputWriter outputWriter = null;
-        if (args != null && args.getPath() != null) {
+        if (args.getPath() != null) {
             Template path = templateHelper.getTemplate(args.getPath());
             outputWriter = new OutputWriter(templateHelper, path, args.isOverride(), args.isAppend());
         }
@@ -67,8 +66,7 @@ public class TextProcessCommand extends BaseCommand {
         TextProcessConfig config = new TextProcessConfig();
         config.setOutputTemplate(args.getOutputTemplate());
 
-        ProcessContext context = new TextProcessContext(config, outputWriter);
-        return context;
+        return new TextProcessContext(config, outputWriter);
     }
 }
 

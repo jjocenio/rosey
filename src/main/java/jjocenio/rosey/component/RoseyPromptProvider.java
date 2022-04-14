@@ -15,23 +15,20 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 @Component
 public class RoseyPromptProvider implements PromptProvider, DataListener {
 
-    private final RowService rowService;
-    private final ExecutorService executorService;
+    private final ExecutorServiceProvider executorServiceProvider;
 
     private final LoadingCache<Integer, Map<Row.Status, Long>> countCache;
 
 
     @Autowired
-    public RoseyPromptProvider(RowService rowService, ExecutorService executorService) {
-        this.rowService = rowService;
-        this.executorService = executorService;
+    public RoseyPromptProvider(RowService rowService, ExecutorServiceProvider executorServiceProvider) {
+        this.executorServiceProvider = executorServiceProvider;
 
         countCache = CacheBuilder.newBuilder()
                 .maximumSize(1)
@@ -46,6 +43,7 @@ public class RoseyPromptProvider implements PromptProvider, DataListener {
     }
 
     @Override
+    @SuppressWarnings("java:S106")
     public AttributedString getPrompt() {
         AttributedStringBuilder attributedStringBuilder = new AttributedStringBuilder();
         attributedStringBuilder.append(createSimpleString("rosey "));
@@ -62,7 +60,7 @@ public class RoseyPromptProvider implements PromptProvider, DataListener {
                 try {
                     StatusColors statusColor = StatusColors.valueOf(rc.getKey().name());
                     attributedStringBuilder.append(createStringWithColor(String.format(" %d ", rc.getValue()), statusColor.foreground, statusColor.background));
-                } catch (IllegalArgumentException e) {
+                } catch (IllegalArgumentException ignored) {
                     // Ignored status
                 }
             });
@@ -80,7 +78,8 @@ public class RoseyPromptProvider implements PromptProvider, DataListener {
     }
 
     private AttributedString createSimpleString(String sentence) {
-        int color = ((ThreadPoolExecutor) executorService).getActiveCount() > 0 ? AttributedStyle.YELLOW : AttributedStyle.GREEN;
+        ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) executorServiceProvider.getExecutorService();
+        int color = threadPoolExecutor.getActiveCount() > 0 ? AttributedStyle.YELLOW : AttributedStyle.GREEN;
         return new AttributedString(sentence, AttributedStyle.DEFAULT.foreground(color));
     }
 
@@ -93,8 +92,8 @@ public class RoseyPromptProvider implements PromptProvider, DataListener {
         PROCESSED(AttributedStyle.WHITE, AttributedStyle.GREEN),
         FAILED(AttributedStyle.WHITE, AttributedStyle.RED);
 
-        private int foreground;
-        private int background;
+        private final int foreground;
+        private final int background;
 
         StatusColors(int foreground, int background) {
             this.foreground = foreground;

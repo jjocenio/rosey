@@ -10,7 +10,7 @@ import java.util.Date;
 import java.util.Map;
 
 @Entity
-@Table(name = "order_process")
+@Table(name = "row")
 public class Row {
 
     @Id

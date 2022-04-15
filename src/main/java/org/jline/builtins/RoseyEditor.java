@@ -7,11 +7,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 
-public class Viewer extends Nano {
+public class RoseyEditor extends Nano {
 
-    public Viewer(Terminal terminal) {
+    public RoseyEditor(Terminal terminal) {
         super(terminal, Paths.get(System.getProperty("user.home") + File.separator + ".rosey"));
         this.title = "Rosey Editor";
+        this.printLineNumbers = true;
     }
 
     public void addBuffer(String name, byte[] data, SyntaxHighlighter syntaxHighlighter) {

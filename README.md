@@ -18,7 +18,7 @@ After built the artifact you can run **Rosey** by just typing
 ## Docker
 Another way to run it is to use the docker image from *Dockerhub*
 
-    docker run --rm --name rosey -it -v $HOME/.rosey:/usr/local/javaapps/rosey/run jjocenio/rosey
+    docker run --rm --name rosey -it -v $HOME/.rosey:/usr/local/javaapps/rosey/run -p 9001:9001 jjocenio/rosey
 
 ## Using
 
@@ -97,6 +97,12 @@ In every place you can use a template, you will have the following data model av
 > **NOTE** When using docker, always remember to put your files in a shared volume
 
 ![data loading](https://raw.githubusercontent.com/jjocenio/rosey/main/assets/process.gif)
+
+### Accesing internal database
+It's possible to access the internal HSQL database using any JDBC compatible client. Just point 
+it to the following URL with username `sa` and with no password.
+
+    jdbc:hsqldb:hsql://localhost:9001/rosey
 
 ## External references
 

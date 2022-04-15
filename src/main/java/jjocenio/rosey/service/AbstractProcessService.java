@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.stream.Collectors.joining;
 
@@ -85,6 +86,7 @@ public abstract class AbstractProcessService implements ProcessService {
         }
 
         executorService.shutdown();
+        monitorFinishToCloseOutput(context, executorService);
 
         return count;
     }
@@ -124,6 +126,33 @@ public abstract class AbstractProcessService implements ProcessService {
         if (writer != null) {
             writer.write(row);
         }
+    }
+
+    protected void monitorFinishToCloseOutput(final ProcessContext processContext, final ExecutorService executorService) {
+        Runnable monitorRunnable = new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        if (executorService.awaitTermination(1, TimeUnit.MINUTES)) {
+                            break;
+                        }
+                    } catch (InterruptedException ignore) {
+                    }
+                }
+
+                if (processContext.getOutputWriter() != null) {
+                    try {
+                        processContext.getOutputWriter().close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        };
+
+        Thread monitor = new Thread(monitorRunnable);
+        monitor.start();
     }
 
     protected abstract Row process(Row row, ProcessContext context);

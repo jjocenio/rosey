@@ -3,7 +3,7 @@ spring:
     name: rosey
   datasource:
     driver-class-name: org.hsqldb.jdbc.JDBCDriver
-    url: jdbc:hsqldb:file://${HOME}/rosey/db
+    jdbcUrl: jdbc:hsqldb:hsql://localhost/rosey
     username: sa
     password:
   main:

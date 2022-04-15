@@ -17,9 +17,12 @@ public class ExecutorServiceProvider {
         this.threads = threads;
     }
 
+    public ExecutorService getCurrentExecutorService() {
+        return executorServiceRef.getValue();
+    }
+
     public ExecutorService getExecutorService() {
         if (executorServiceRef.getValue() == null || executorServiceRef.getValue().isTerminated()) {
-            System.out.println("Creating new executor service");
             executorServiceRef.setValue(Executors.newFixedThreadPool(threads));
         }
 

@@ -24,4 +24,7 @@ public interface RowRepository extends CrudRepository<Row, Long> {
     Long getMaxRowId();
 
     List<Row> findAllByStatus(Row.Status status);
+
+    @Query(value = "select * from ORDER_PROCESS order by rand() limit ?1", nativeQuery = true)
+    List<Row> getSample(int limit);
 }

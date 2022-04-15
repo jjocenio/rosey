@@ -72,7 +72,7 @@ public class TextProcessCommand extends BaseCommand {
 
 class TextProcessArgs extends OutputArgs {
 
-    @Parameter(names = "--output-template", description = "the template to apply to the row")
+    @Parameter(names = "--output-template", description = "the template to apply to the row. Freemarker template is supported. Use '@' to with a relative path to specify a template file")
     private String outputTemplate;
 
     public String getOutputTemplate() {

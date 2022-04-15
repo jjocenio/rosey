@@ -19,6 +19,10 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+import static java.util.stream.Collectors.toList;
 
 @Service
 public class RowService extends DataChanger {
@@ -93,6 +97,10 @@ public class RowService extends DataChanger {
 
     public List<Row> findAllByStatus(Row.Status status) {
         return repository.findAllByStatus(status);
+    }
+
+    public List<Row> getSample(int limit) {
+        return repository.getSample(limit);
     }
 
     public void updateProcessingToPending() {

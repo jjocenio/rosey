@@ -12,11 +12,7 @@ import jjocenio.rosey.service.http.HttpProcessService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.shell.Availability;
-import org.springframework.shell.standard.ShellCommandGroup;
-import org.springframework.shell.standard.ShellComponent;
-import org.springframework.shell.standard.ShellMethod;
-import org.springframework.shell.standard.ShellMethodAvailability;
-import org.springframework.shell.standard.ShellOption;
+import org.springframework.shell.standard.*;
 
 import java.io.IOException;
 
@@ -83,10 +79,10 @@ class HttpProcessArgs extends OutputArgs {
     @Parameter(names = "--http-method", description = "the http method to use", required = true)
     private HttpProcessConfig.HttpMethod httpMethod;
 
-    @Parameter(names = "--body", description = "the request body. Freemarker template is supported. Use '@' to use a file instead of inline template")
+    @Parameter(names = "--body", description = "the request body. Freemarker template is supported. Use '@' to with a relative path to specify a template file")
     private String body;
 
-    @Parameter(names = "--headers", description = "the request headers. Freemarker template is supported. Use '@' to use a file instead of inline template")
+    @Parameter(names = "--headers", description = "the request headers. Freemarker template is supported. Use '@' to with a relative path to specify a template file")
     private String headers;
 
     public String getUrl() {

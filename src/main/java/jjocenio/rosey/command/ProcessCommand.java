@@ -52,7 +52,7 @@ public class ProcessCommand extends BaseCommand {
     @ShellMethod(key = "process show-progress", value = "shows a progress bar")
     public void showProgress(@ShellOption(value = "--delay", defaultValue = "5000", help = "the update interval") long delay) {
         final AtomicBoolean running = new AtomicBoolean(true);
-        final ThreadPoolExecutor executor = (ThreadPoolExecutor) executorServiceProvider.getExecutorService();
+        final ThreadPoolExecutor executor = (ThreadPoolExecutor) executorServiceProvider.getCurrentExecutorService();
 
         if (executor.getActiveCount() == 0) {
             println(STATUS_NOT_RUNNING);

@@ -5,11 +5,7 @@ import freemarker.template.TemplateException;
 import jjocenio.rosey.component.TemplateHelper;
 import jjocenio.rosey.persistence.Row;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -33,9 +29,9 @@ public class OutputWriter implements Closeable {
         if (row != null && row.getOutput() != null) {
             OutputStream outputStream = getOutputStream(row);
             outputStream.write(row.getOutput().getBytes());
+            outputStream.flush();
 
             if (!append) {
-                outputStream.flush();
                 outputStream.close();
             }
         }
@@ -44,26 +40,29 @@ public class OutputWriter implements Closeable {
     private OutputStream getOutputStream(Row row) throws IOException {
         try {
             String path = templateHelper.merge(pathTemplate, Map.of("row", row));
-            OutputStream outputStream = outputMap.get(path);
-
-            if (outputStream == null) {
-                File outputFile = new File(path);
-
-                if (!override && outputFile.exists()) {
-                    throw new IOException("File exists: " + path);
-                }
-
-                outputFile.getParentFile().mkdirs();
-
-                outputStream = new FileOutputStream(path, !override);
-                if (append) {
-                    outputMap.put(path, outputStream);
-                }
+            if (append) {
+                outputMap.computeIfAbsent(path, this::createOutputStream);
             }
 
-            return outputStream;
+            return append ? outputMap.get(path) : createOutputStream(path);
         } catch (TemplateException e) {
             throw new IOException(e);
+        }
+    }
+
+    private OutputStream createOutputStream(String filePath) {
+        File outputFile = new File(filePath);
+
+        if (!override && outputFile.exists()) {
+            throw new IllegalStateException("File exists: " + filePath);
+        }
+
+        outputFile.getParentFile().mkdirs();
+
+        try {
+            return new FileOutputStream(filePath, !override);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Invalid output file.", e);
         }
     }
 

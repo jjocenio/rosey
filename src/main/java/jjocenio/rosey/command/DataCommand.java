@@ -6,6 +6,7 @@ import jjocenio.rosey.service.RowService;
 import me.tongfei.progressbar.ProgressBar;
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.apache.commons.lang3.mutable.MutableObject;
+import org.jline.builtins.RoseyViewer;
 import org.jline.utils.AttributedStyle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.shell.standard.ShellCommandGroup;
@@ -21,6 +22,7 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static java.util.stream.Collectors.toList;
 
@@ -94,9 +96,15 @@ public class DataCommand extends BaseCommand {
         return saved;
     }
 
-    @ShellMethod(key = "data get", value = "gets the row")
-    public Row get(@ShellOption(value = "--row-id", help = "the id of the row to retrieve") long rowId) {
-        return service.findById(rowId).get();
+    @ShellMethod(key = "data get", value = "gets a row. if no id specified, it shows a random selection")
+    public List<Row> get(@ShellOption(value = "--row-id", help = "the id of the row to retrieve", defaultValue = "__NULL__") Long rowId,
+                         @ShellOption(value = "--limit", help = "valid only for random selection", defaultValue = "5") int limit) {
+        if (rowId == null) {
+            return service.getSample(limit);
+        }
+
+        Optional<Row> row = service.findById(rowId);
+        return row.map(List::of).orElseThrow(() -> new IllegalArgumentException("Row not found"));
     }
 
     @ShellMethod(key = "data clear", value = "removes all data")
@@ -121,7 +129,9 @@ public class DataCommand extends BaseCommand {
 
     @ShellMethod(key = "data show-failed", value = "presents a list of failed rows if any")
     public void showFailed(@ShellOption(value = "--limit", help = "the limit f rows to show", defaultValue = "50") long limit,
-                           @ShellOption(value = "--width", help = "the width of the table in number characters. if <= 0, it defaults to terminal width", defaultValue = "-1") int width) {
+                           @ShellOption(value = "--width", help = "the width of the table in number characters. if <= 0, it defaults to terminal width", defaultValue = "-1") int width,
+                           @ShellOption(value = "--just-print", help = "just print the table without using the scroll viewer", defaultValue = "false") boolean justPrint) throws IOException, InterruptedException {
+
         List<Row> rowsFailed = service.findAllByStatus(Row.Status.FAILED).stream().limit(limit).collect(toList());
 
         LinkedHashMap<String, Object> headers = new LinkedHashMap<>();
@@ -136,7 +146,22 @@ public class DataCommand extends BaseCommand {
         tableBuilder.addInnerBorder(BorderStyle.fancy_light);
         tableBuilder.addHeaderBorder(BorderStyle.fancy_double);
 
-        terminal.writer().println(tableBuilder.build().render(width <= 0 ? terminal.getWidth() : width));
+        String tablePrint = tableBuilder.build().render(width <= 0 ? terminal.getWidth() : width);
+
+        if (justPrint) {
+            justPrintTable(tablePrint);
+        } else {
+            try {
+                RoseyViewer roseyViewer = new RoseyViewer(terminal);
+                roseyViewer.view("", tablePrint.getBytes());
+            } catch (Exception e) {
+                justPrintTable(tablePrint);
+            }
+        }
+    }
+
+    private void justPrintTable(String tablePrint) {
+        terminal.writer().println(tablePrint);
         terminal.flush();
     }
 }

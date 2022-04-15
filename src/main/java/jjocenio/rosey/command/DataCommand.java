@@ -18,6 +18,7 @@ import org.springframework.shell.table.BorderStyle;
 import org.springframework.shell.table.TableBuilder;
 import org.springframework.shell.table.TableModel;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,10 +32,12 @@ import static java.util.stream.Collectors.toList;
 public class DataCommand extends BaseCommand {
 
     private final RowService service;
+    private final File workingDirectory;
 
     @Autowired
-    public DataCommand(RowService service) {
+    public DataCommand(RowService service, File workingDirectory) {
         this.service = service;
+        this.workingDirectory = workingDirectory;
     }
 
     @ShellMethod(key = "data load", value = "loads data into internal database")
@@ -152,7 +155,7 @@ public class DataCommand extends BaseCommand {
             justPrintTable(tablePrint);
         } else {
             try {
-                RoseyViewer roseyViewer = new RoseyViewer(terminal);
+                RoseyViewer roseyViewer = new RoseyViewer(terminal, workingDirectory);
                 roseyViewer.view("", tablePrint.getBytes());
             } catch (Exception e) {
                 justPrintTable(tablePrint);

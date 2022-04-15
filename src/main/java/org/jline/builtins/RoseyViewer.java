@@ -5,14 +5,13 @@ import org.jline.terminal.Terminal;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
 public class RoseyViewer extends Less {
 
-    public RoseyViewer(Terminal terminal) {
-        super(terminal, Paths.get(System.getProperty("user.home") + File.separator + ".rosey"));
+    public RoseyViewer(Terminal terminal, File workingDirectory) {
+        super(terminal, workingDirectory.toPath());
     }
 
     public void view(String name, byte[] data) throws IOException, InterruptedException {

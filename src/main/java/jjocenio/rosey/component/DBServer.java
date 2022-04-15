@@ -1,27 +1,28 @@
 package jjocenio.rosey.component;
 
+import jjocenio.rosey.ApplicationExitRequestEvent;
 import org.hsqldb.Server;
 import org.hsqldb.persist.HsqlProperties;
+import org.springframework.context.event.EventListener;
 
 import javax.persistence.PersistenceException;
+import java.io.File;
 
 import static org.hsqldb.Database.CLOSEMODE_NORMAL;
 
 public class DBServer {
 
-    private static final String DATABASE_PATH_PATTERN = "file:/%s/rosey/db";
-
     private final Server hsqlServer;
 
-    public DBServer() throws PersistenceException {
+    public DBServer(File workingDirectory) throws PersistenceException {
         HsqlProperties hsqlProperties = new HsqlProperties();
-        hsqlProperties.setProperty("server.database.0", getDatabasePath());
+        hsqlProperties.setProperty("server.database.0", workingDirectory.getPath() + File.separator + "db" + File.separator + "rosey");
         hsqlProperties.setProperty("server.dbname.0", "rosey");
         hsqlProperties.setProperty("server.remote_open", true);
 
         this.hsqlServer = new Server();
-        this.hsqlServer.setTrace(false);
         this.hsqlServer.setSilent(true);
+        this.hsqlServer.setTrace(false);
         this.hsqlServer.setLogWriter(null);
         this.hsqlServer.setErrWriter(null);
 
@@ -43,8 +44,9 @@ public class DBServer {
         this.hsqlServer.stop();
     }
 
-    private String getDatabasePath() {
-        return String.format(DATABASE_PATH_PATTERN, System.getProperty("user.home"));
+    @EventListener
+    public void handleContextStoppedEvent(ApplicationExitRequestEvent event) {
+        this.stop();
     }
 }
 

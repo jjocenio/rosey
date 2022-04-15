@@ -5,12 +5,11 @@ import org.jline.terminal.Terminal;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
 
 public class RoseyEditor extends Nano {
 
-    public RoseyEditor(Terminal terminal) {
-        super(terminal, Paths.get(System.getProperty("user.home") + File.separator + ".rosey"));
+    public RoseyEditor(Terminal terminal, File workingDirectory) {
+        super(terminal, workingDirectory.toPath());
         this.title = "Rosey Editor";
         this.printLineNumbers = true;
     }

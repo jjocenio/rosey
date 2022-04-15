@@ -3,17 +3,24 @@ package jjocenio.rosey.configuration;
 import freemarker.cache.FileTemplateLoader;
 import freemarker.template.TemplateExceptionHandler;
 import jjocenio.rosey.component.DBServer;
+import org.jline.reader.History;
+import org.jline.reader.LineReader;
+import org.jline.reader.impl.history.DefaultHistory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.ContextStoppedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.web.client.RestTemplate;
 
 import javax.persistence.PersistenceException;
 import javax.sql.DataSource;
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 
 @Configuration
 public class ApplicationContext {
@@ -44,9 +51,29 @@ public class ApplicationContext {
     }
 
     @Bean
-    public DBServer dbServer() throws PersistenceException {
-        DBServer dbServer = new DBServer();
+    public DBServer dbServer(File workingDirectory) throws PersistenceException {
+        DBServer dbServer = new DBServer(workingDirectory);
         dbServer.start();
         return dbServer;
+    }
+
+    @Bean
+    public File workingDirectory(@Value("${workingDir:#{null}}") String workingDir) {
+        String workingPath = Optional.ofNullable(workingDir).orElseGet(() -> System.getProperty("user.home") + File.separator + ".rosey");
+        File workingDirectory = new File(workingPath);
+
+        System.setProperty("user.dir", workingDirectory.getAbsolutePath());
+        return workingDirectory;
+    }
+
+    @Bean
+    public History history(File workingDirectory) {
+        return new DefaultHistory() {
+            @Override
+            public void attach(LineReader reader) {
+                reader.setVariable(LineReader.HISTORY_FILE, new File(workingDirectory, "rosey.log"));
+                super.attach(reader);
+            }
+        };
     }
 }

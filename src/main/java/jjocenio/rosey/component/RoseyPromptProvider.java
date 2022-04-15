@@ -66,7 +66,7 @@ public class RoseyPromptProvider implements PromptProvider, DataListener {
             });
         }
 
-        attributedStringBuilder.append(createSimpleString(" > "));
+        attributedStringBuilder.append(createSimpleString(" :> "));
         return attributedStringBuilder.toAttributedString();
     }
 

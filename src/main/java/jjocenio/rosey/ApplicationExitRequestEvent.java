@@ -1,4 +1,4 @@
-package jjocenio.rosey.service;
+package jjocenio.rosey;
 
 import org.springframework.context.ApplicationEvent;
 

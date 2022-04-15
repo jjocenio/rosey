@@ -1,4 +1,4 @@
-package jjocenio.rosey.component;
+package jjocenio.rosey;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
@@ -17,6 +17,6 @@ public class ApplicationRunnerExitWatcher implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        applicationEventPublisher.publishEvent(null);
+        applicationEventPublisher.publishEvent(new ApplicationExitRequestEvent(this));
     }
 }

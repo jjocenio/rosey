@@ -12,6 +12,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.shell.result.TerminalAwareResultHandler;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -20,10 +21,12 @@ import java.util.List;
 public class RowListResultHandler extends TerminalAwareResultHandler<List<Row>> {
 
     private final Nano.SyntaxHighlighter jsonSyntaxHighlighter;
+    private final File workingDirectory;
 
     @Autowired
-    public RowListResultHandler(@Value("classpath:json.nanorc") Resource jsonNanorc) throws IOException {
+    public RowListResultHandler(@Value("classpath:json.nanorc") Resource jsonNanorc, File workingDirectory) throws IOException {
         this.jsonSyntaxHighlighter = Nano.SyntaxHighlighter.build(String.valueOf(jsonNanorc.getURL()));
+        this.workingDirectory = workingDirectory;
     }
 
     @Override
@@ -32,7 +35,7 @@ public class RowListResultHandler extends TerminalAwareResultHandler<List<Row>> 
             ObjectMapper mapper = new ObjectMapper();
             byte[] data = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(result);
 
-            RoseyEditor viewer = new RoseyEditor(terminal);
+            RoseyEditor viewer = new RoseyEditor(terminal, workingDirectory);
             viewer.addBuffer("rows", data, jsonSyntaxHighlighter);
             viewer.run();
         } catch (Exception e) {

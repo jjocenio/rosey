@@ -31,6 +31,8 @@ public class Row {
     @Convert(converter = JsonConverter.class)
     private Map<String, Object> data;
 
+    @Lob
+    @Column(length = 100000)
     private String output;
 
     public Row() {
